@@ -1,0 +1,236 @@
+//
+// AndroidHooksTestAppActivity.java
+// Payfirma Corporation
+//
+// Created by Jason Collinge on 3/27/2012
+// Copyright 2012 Payfirma Corporation. All rights reserved
+
+package com.pftest;
+
+import java.math.BigDecimal;
+
+import android.app.Activity;
+import android.content.ActivityNotFoundException;
+import android.content.ComponentName;
+import android.content.Intent;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
+
+public class AndroidHooksTestAppActivity extends Activity
+{
+
+	private static boolean		useCallback					= true;
+	private static final int	REQUEST_CODE				= 1;
+	private boolean				m_WasLaunchedFromExternal	= false;
+
+	/** Called when the activity is first created. */
+	@Override
+	public void onCreate(Bundle savedInstanceState)
+	{
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.main);
+
+		m_WasLaunchedFromExternal = false;
+		Intent intent = getIntent();
+		if (intent != null)
+		{
+			String action = intent.getAction();
+
+			if (action != null && action.contentEquals("com.pftest.receivepaymentresult"))
+			{
+				m_WasLaunchedFromExternal = true;
+				Bundle extras = getIntent().getExtras();
+				if (extras != null)
+				{
+					TextView text = (TextView) findViewById(R.id.message);
+					String displayStr = "Amount: " + extras.getString("pf_amount");
+					displayStr = displayStr + "     Tip: " + extras.getString("pf_tip");
+					displayStr = displayStr + "     Tax: " + extras.getString("pf_tax");
+					displayStr = displayStr + "     Total: " + extras.getString("pf_total");
+					displayStr = displayStr + "\n     Description: " + extras.getString("pf_description");
+					displayStr = displayStr + "\n     Card Number: " + extras.getString("pf_masked_card");
+					displayStr = displayStr + "\n     ID: " + extras.getString("pf_transaction_id");
+					displayStr = displayStr + "\n     Result: " + extras.getString("pf_result");
+					displayStr = displayStr + "\n     Marchant Name: " + extras.getString("pf_merchant_name");
+					displayStr = displayStr + "\n     Timestamp: " + extras.getString("pf_timestamp");
+					displayStr = displayStr + "\n     Type: " + extras.getString("pf_transaction_type");
+
+					text.setText(displayStr);
+				}
+			}
+		}
+
+		final Button button = (Button) findViewById(R.id.launch);
+		button.setOnClickListener(new View.OnClickListener()
+		{
+			public void onClick(View v)
+			{
+				Intent intent = new Intent("com.payfirma.makepayment");
+
+				intent.putExtra("com.payfirma.input.amount", "1.25");
+				intent.putExtra("com.payfirma.input.description", "Can of Coke");
+				intent.putExtra("com.payfirma.input.transaction_type", "SALE");
+				intent.putExtra("com.payfirma.input.sending_app", "Test App");
+				intent.putExtra("com.payfirma.input.email", "jason.collinge@payfirma.com");
+				
+				// To get responses from the Payfirma app you can use either a
+				// call and return method or a callback.
+				if (useCallback)
+				{
+					intent.putExtra("com.payfirma.input.callback", "com.pftest.receivepaymentresult");
+				}
+
+				//intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
+
+				try
+				{
+					if (useCallback)
+					{
+						startActivity(intent);
+					}
+					else
+					{
+						startActivityForResult(intent, 1);
+					}
+					//finish();
+				}
+				catch (ActivityNotFoundException e)
+				{
+					TextView text = (TextView) findViewById(R.id.message);
+					text.setText("Payfirma Application not found.");
+					button.setVisibility(View.GONE);
+				}
+			}
+		});
+		final Button Refbutton = (Button) findViewById(R.id.Refund);
+		Refbutton.setOnClickListener(new View.OnClickListener()
+		{
+			public void onClick(View v)
+			{
+				EditText rID = (EditText) findViewById(R.id.refundID);
+								
+				Intent intent = new Intent("com.payfirma.makepayment");
+
+				String oid = rID.getText().toString();
+				intent.putExtra("com.payfirma.input.amount", "1.25");
+				intent.putExtra("com.payfirma.input.sending_app", "Test App");
+				intent.putExtra("com.payfirma.input.description", "Refund: Can of Coke");
+				intent.putExtra("com.payfirma.input.transaction_type", "REFUND");
+				intent.putExtra("com.payfirma.input.orig_id", oid);
+				intent.putExtra("com.payfirma.input.email", "jason.collinge@payfirma.com");
+				// To get responses from the Payfirma app you can use either a
+				// call and return method or a callback.
+				if (useCallback)
+				{
+					intent.putExtra("com.payfirma.input.callback", "com.pftest.receivepaymentresult");
+				}
+
+				//intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
+
+				try
+				{
+					if (useCallback)
+					{
+						startActivity(intent);
+					}
+					else
+					{
+						startActivityForResult(intent, 1);
+					}
+				//	finish();
+				}
+				catch (ActivityNotFoundException e)
+				{
+					TextView text = (TextView) findViewById(R.id.message);
+					text.setText("Payfirma Application not found.");
+					button.setVisibility(View.GONE);
+				}
+			}
+		});
+		
+		
+		final Button authbutton = (Button) findViewById(R.id.Auth);
+		authbutton.setOnClickListener(new View.OnClickListener()
+		{
+			public void onClick(View v)
+			{
+				Intent intent = new Intent("com.payfirma.makepayment");
+
+				intent.putExtra("com.payfirma.input.amount", "1.25");
+				intent.putExtra("com.payfirma.input.description", "Can of Coke");
+				intent.putExtra("com.payfirma.input.transaction_type", "AUTH");
+				intent.putExtra("com.payfirma.input.email", "jason.collinge@payfirma.com");
+				
+				// To get responses from the Payfirma app you can use either a
+				// call and return method or a callback.
+				if (useCallback)
+				{
+					intent.putExtra("com.payfirma.input.callback", "com.pftest.receivepaymentresult");
+				}
+
+				//intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
+
+				try
+				{
+					if (useCallback)
+					{
+						startActivity(intent);
+					}
+					else
+					{
+						startActivityForResult(intent, 1);
+					}
+				//	finish();
+				}
+				catch (ActivityNotFoundException e)
+				{
+					TextView text = (TextView) findViewById(R.id.message);
+					text.setText("Payfirma Application not found.");
+					button.setVisibility(View.GONE);
+				}
+			}
+		});
+	}
+
+	@Override
+	protected void onResume()
+	{
+		super.onResume();
+	}
+
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data)
+	{
+		if (resultCode == RESULT_OK && requestCode == REQUEST_CODE)
+		{
+			if (data.hasExtra("pf_result"))
+			{
+				String result = data.getExtras().getString("pf_result");
+				if (result.toLowerCase().startsWith("error"))
+				{
+				//	return;
+				}
+			}
+			//if (data.hasExtra("pf_amount"))
+			{
+				TextView text = (TextView) findViewById(R.id.message);
+				String displayStr = "Amount: " + data.getExtras().getString("pf_amount");
+				displayStr = displayStr + "     Tip: " + data.getExtras().getString("pf_tip");
+				displayStr = displayStr + "     Tax: " + data.getExtras().getString("pf_tax");
+				displayStr = displayStr + "     Total: " + data.getExtras().getString("pf_total");
+				displayStr = displayStr + "\n     Description: " + data.getExtras().getString("pf_description");
+				displayStr = displayStr + "\n     Card Number: " + data.getExtras().getString("pf_masked_card");
+				displayStr = displayStr + "\n     ID: " + data.getExtras().getString("pf_transaction_id");
+				displayStr = displayStr + "\n     Result: " + data.getExtras().getString("pf_result");
+				displayStr = displayStr + "\n     Marchant Name: " + data.getExtras().getString("pf_merchant_name");
+				displayStr = displayStr + "\n     Timestamp: " + data.getExtras().getString("pf_timestamp");
+				displayStr = displayStr + "\n     Type: " + data.getExtras().getString("pf_transaction_type");
+
+				text.setText(displayStr);
+			}
+		}
+	}
+}
